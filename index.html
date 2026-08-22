@@ -3,7 +3,50 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Docket — JPG ⇄ PDF, Merge & Split</title>
+<title>Docket — Free Online JPG to PDF, PDF to JPG, Merge & Split Tool</title>
+
+<!-- SEO -->
+<meta name="description" content="Docket is a free, browser-based toolkit to convert JPG to PDF, PDF to JPG, merge multiple PDFs, and split PDF files — no uploads, no sign-up, 100% private processing in your browser.">
+<meta name="keywords" content="jpg to pdf, pdf to jpg, merge pdf, split pdf, pdf converter, image to pdf converter, combine pdf files, pdf splitter online, free pdf tools, online pdf editor, convert pdf to image, pdf merger, pdf tools no upload, browser based pdf converter">
+<meta name="author" content="Sudhakar Mishra">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://yourdomain.com/">
+
+<!-- Open Graph / Facebook -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Docket — Free Online JPG to PDF, PDF to JPG, Merge & Split Tool">
+<meta property="og:description" content="Convert JPG to PDF, PDF to JPG, merge, and split PDF files — free, fast, and processed entirely in your browser. No uploads, no sign-up.">
+<meta property="og:url" content="https://yourdomain.com/">
+<meta property="og:site_name" content="Docket">
+<meta property="og:image" content="https://yourdomain.com/og-image.png">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Docket — Free Online JPG to PDF, PDF to JPG, Merge & Split Tool">
+<meta name="twitter:description" content="Convert JPG to PDF, PDF to JPG, merge, and split PDF files — free, fast, and processed entirely in your browser. No uploads, no sign-up.">
+<meta name="twitter:image" content="https://yourdomain.com/og-image.png">
+
+<!-- Structured data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Docket",
+  "applicationCategory": "Utility",
+  "operatingSystem": "Any (runs in browser)",
+  "description": "A free browser-based toolkit to convert JPG to PDF, PDF to JPG, merge multiple PDFs, and split PDF files without uploading any file to a server.",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Sudhakar Mishra"
+  }
+}
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -20,7 +63,7 @@
         </span>
       </div>
       <div class="masthead-copy">
-        <h1>DOCKET</h1>
+        <h1>Docket</h1>
         <p class="subhead">Every file leaves one. Convert, merge and split &mdash; right here, nothing ever leaves your browser.</p>
       </div>
     </div>
@@ -42,6 +85,14 @@
     <button class="tab" data-tool="split" role="tab" aria-selected="false">
       <span class="tab-index">Suite D</span>
       <span class="tab-name">Split PDF</span>
+    </button>
+    <button class="tab" data-tool="compress" role="tab" aria-selected="false">
+      <span class="tab-index">Suite E</span>
+      <span class="tab-name">Compress Image</span>
+    </button>
+    <button class="tab" data-tool="compresspdf" role="tab" aria-selected="false">
+      <span class="tab-index">Suite F</span>
+      <span class="tab-name">Compress PDF</span>
     </button>
   </nav>
 
@@ -205,6 +256,98 @@
             <h3>Produce the files</h3>
             <button class="stamp-button" id="btn-split" disabled>Split PDF</button>
             <div class="status" id="status-split"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Compress -->
+    <section class="panel" id="panel-compress" data-panel="compress" hidden>
+      <div class="panel-head">
+        <h2>Compress Image</h2>
+        <p>Shrink JPG or PNG file size while keeping quality you control.</p>
+      </div>
+
+      <div class="trail" data-steps="3">
+        <div class="trail-step" data-step="1">
+          <div class="step-marker">01</div>
+          <div class="step-body">
+            <h3>Add an image</h3>
+            <div class="dropzone" id="dz-compress" tabindex="0">
+              <p><strong>Drop a JPG or PNG here</strong> or click to browse</p>
+              <input type="file" id="input-compress" accept="image/jpeg,image/png" hidden>
+            </div>
+            <ul class="file-list" id="list-compress"></ul>
+          </div>
+        </div>
+
+        <div class="trail-step" data-step="2">
+          <div class="step-marker">02</div>
+          <div class="step-body">
+            <h3>Set quality</h3>
+            <div class="range-input">
+              <label for="quality-field">Quality: <span id="quality-value">70</span>%</label>
+              <input type="range" id="quality-field" min="10" max="100" value="70">
+            </div>
+            <div class="range-input">
+              <label for="maxwidth-field">Max width (px, optional — leave blank to keep original)</label>
+              <input type="text" id="maxwidth-field" placeholder="e.g. 1600">
+            </div>
+            <div class="compress-preview" id="compress-preview" hidden>
+              <p class="hint" id="compress-size-hint"></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="trail-step" data-step="3">
+          <div class="step-marker">03</div>
+          <div class="step-body">
+            <h3>Produce the file</h3>
+            <button class="stamp-button" id="btn-compress" disabled>Compress Image</button>
+            <div class="status" id="status-compress"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Compress PDF -->
+    <section class="panel" id="panel-compresspdf" data-panel="compresspdf" hidden>
+      <div class="panel-head">
+        <h2>Compress PDF</h2>
+        <p>Shrink a PDF's file size by re-rendering its pages at a quality you choose.</p>
+      </div>
+
+      <div class="trail" data-steps="3">
+        <div class="trail-step" data-step="1">
+          <div class="step-marker">01</div>
+          <div class="step-body">
+            <h3>Add a PDF</h3>
+            <div class="dropzone" id="dz-compresspdf" tabindex="0">
+              <p><strong>Drop a PDF here</strong> or click to browse</p>
+              <input type="file" id="input-compresspdf" accept="application/pdf" hidden>
+            </div>
+            <ul class="file-list" id="list-compresspdf"></ul>
+          </div>
+        </div>
+
+        <div class="trail-step" data-step="2">
+          <div class="step-marker">02</div>
+          <div class="step-body">
+            <h3>Set quality</h3>
+            <div class="range-input">
+              <label for="pdfquality-field">Quality: <span id="pdfquality-value">60</span>%</label>
+              <input type="range" id="pdfquality-field" min="20" max="95" value="60">
+            </div>
+            <p class="hint">Lower quality means a smaller file. Pages are re-rendered as images, so text will no longer be selectable in the output.</p>
+          </div>
+        </div>
+
+        <div class="trail-step" data-step="3">
+          <div class="step-marker">03</div>
+          <div class="step-body">
+            <h3>Produce the file</h3>
+            <button class="stamp-button" id="btn-compresspdf" disabled>Compress PDF</button>
+            <div class="status" id="status-compresspdf"></div>
           </div>
         </div>
       </div>

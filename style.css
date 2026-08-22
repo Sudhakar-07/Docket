@@ -7,6 +7,7 @@
   --paper-line: rgba(20, 24, 29, 0.14);
   --stamp-red: #b8433a;
   --stamp-red-dark: #8f342c;
+  --stamp-green: #3c7a4e;
   --teal: #3e7c7b;
   --teal-light: #6fa8a3;
   --pencil: #9a9a8c;
@@ -55,14 +56,14 @@ body {
   width: 84px;
   height: 84px;
   border-radius: 50%;
-  border: 3px solid var(--stamp-red);
-  outline: 1px solid var(--stamp-red);
+  border: 3px solid var(--stamp-green);
+  outline: 1px solid var(--stamp-green);
   outline-offset: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   transform: rotate(-9deg);
-  color: var(--stamp-red);
+  color: var(--stamp-green);
 }
 
 .stamp-text {
@@ -350,7 +351,12 @@ body {
   color: var(--pencil-dark);
 }
 
-.range-input input {
+.range-input input[type="range"] {
+  accent-color: var(--teal);
+  width: 100%;
+}
+
+.range-input input[type="text"] {
   border: 1px solid var(--paper-line);
   border-radius: 6px;
   padding: 10px 12px;

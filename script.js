@@ -383,3 +383,176 @@ document.getElementById("btn-split").addEventListener("click", async () => {
     setStatus("status-split", "Couldn't read that PDF. Try another file.", "error");
   }
 });
+
+// ---------- Compress Image ----------
+
+const compressArea = setupFileArea({
+  dropzoneId: "dz-compress",
+  inputId: "input-compress",
+  listId: "list-compress",
+  multiple: false,
+  accept: ["image/jpeg", "image/png", ".jpg", ".jpeg", ".png"],
+  onChange: (files) => {
+    document.getElementById("btn-compress").disabled = files.length === 0;
+    const preview = document.getElementById("compress-preview");
+    if (files.length === 0) {
+      preview.hidden = true;
+      return;
+    }
+    preview.hidden = false;
+    document.getElementById("compress-size-hint").textContent =
+      `Original size: ${bytesToSize(files[0].size)}`;
+  },
+});
+
+const qualityField = document.getElementById("quality-field");
+const qualityValue = document.getElementById("quality-value");
+qualityField.addEventListener("input", () => {
+  qualityValue.textContent = qualityField.value;
+});
+
+function loadImageFromFile(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+document.getElementById("btn-compress").addEventListener("click", async () => {
+  const files = compressArea.getFiles();
+  if (files.length === 0) return;
+  const file = files[0];
+  const quality = Number(qualityField.value) / 100;
+  const maxWidthRaw = document.getElementById("maxwidth-field").value.trim();
+  const maxWidth = maxWidthRaw ? Number(maxWidthRaw) : null;
+
+  setStatus("status-compress", "Compressing…", "busy");
+  try {
+    const img = await loadImageFromFile(file);
+    let { width, height } = img;
+
+    if (maxWidth && width > maxWidth) {
+      height = Math.round((height * maxWidth) / width);
+      width = maxWidth;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+
+    // Flatten transparency onto white so JPEG output doesn't turn black.
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(img, 0, 0, width, height);
+    URL.revokeObjectURL(img.src);
+
+    const isPng = file.type === "image/png" || file.name.toLowerCase().endsWith(".png");
+    const outType = isPng ? "image/png" : "image/jpeg";
+    // PNG is lossless in canvas.toBlob — quality slider only affects JPEG output.
+    const blob = await new Promise((resolve) =>
+      canvas.toBlob(resolve, outType, isPng ? undefined : quality)
+    );
+
+    const baseName = file.name.replace(/\.(jpe?g|png)$/i, "");
+    const ext = isPng ? "png" : "jpg";
+    downloadBlob(blob, `${baseName}-compressed.${ext}`);
+
+    const savedPct = Math.round((1 - blob.size / file.size) * 100);
+    const savedMsg =
+      savedPct > 0
+        ? `${bytesToSize(file.size)} → ${bytesToSize(blob.size)} (${savedPct}% smaller).`
+        : `${bytesToSize(file.size)} → ${bytesToSize(blob.size)}.`;
+    setStatus("status-compress", `Done — ${savedMsg}`, "ok");
+  } catch (err) {
+    console.error(err);
+    setStatus("status-compress", "Couldn't read that image. Try another file.", "error");
+  }
+});
+
+// ---------- Compress PDF ----------
+
+const compressPdfArea = setupFileArea({
+  dropzoneId: "dz-compresspdf",
+  inputId: "input-compresspdf",
+  listId: "list-compresspdf",
+  multiple: false,
+  accept: ["application/pdf", ".pdf"],
+  onChange: (files) => {
+    document.getElementById("btn-compresspdf").disabled = files.length === 0;
+  },
+});
+
+const pdfQualityField = document.getElementById("pdfquality-field");
+const pdfQualityValue = document.getElementById("pdfquality-value");
+pdfQualityField.addEventListener("input", () => {
+  pdfQualityValue.textContent = pdfQualityField.value;
+});
+
+document.getElementById("btn-compresspdf").addEventListener("click", async () => {
+  const files = compressPdfArea.getFiles();
+  if (files.length === 0) return;
+  const file = files[0];
+  const quality = Number(pdfQualityField.value) / 100;
+  const baseName = file.name.replace(/\.pdf$/i, "");
+
+  setStatus("status-compresspdf", "Checking file…", "busy");
+  try {
+    const bytes = await readAsArrayBuffer(file);
+    const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+
+    const isLarge = pdf.numPages > 40 || file.size > 25 * 1024 * 1024;
+    if (isLarge) {
+      const proceed = window.confirm(
+        `This PDF has ${pdf.numPages} pages (${bytesToSize(file.size)}). ` +
+        `Compressing it in the browser could take a while and use a fair bit of memory. Continue?`
+      );
+      if (!proceed) {
+        setStatus("status-compresspdf", "Cancelled.", "");
+        return;
+      }
+    }
+
+    setStatus("status-compresspdf", "Compressing…", "busy");
+    const out = await PDFDocument.create();
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      setStatus("status-compresspdf", `Rendering page ${i} of ${pdf.numPages}…`, "busy");
+
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale: 1.5 });
+      const canvas = document.createElement("canvas");
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, viewport.width, viewport.height);
+      await page.render({ canvasContext: ctx, viewport }).promise;
+
+      const jpegBlob = await new Promise((resolve) =>
+        canvas.toBlob(resolve, "image/jpeg", quality)
+      );
+      const jpegBytes = new Uint8Array(await jpegBlob.arrayBuffer());
+      const embedded = await out.embedJpg(jpegBytes);
+
+      const outPage = out.addPage([viewport.width, viewport.height]);
+      outPage.drawImage(embedded, { x: 0, y: 0, width: viewport.width, height: viewport.height });
+    }
+
+    const outBytes = await out.save();
+    const outBlob = new Blob([outBytes], { type: "application/pdf" });
+    downloadBlob(outBlob, `${baseName}-compressed.pdf`);
+
+    const savedPct = Math.round((1 - outBlob.size / file.size) * 100);
+    const savedMsg =
+      savedPct > 0
+        ? `${bytesToSize(file.size)} → ${bytesToSize(outBlob.size)} (${savedPct}% smaller).`
+        : `${bytesToSize(file.size)} → ${bytesToSize(outBlob.size)}.`;
+    setStatus("status-compresspdf", `Done — ${savedMsg}`, "ok");
+  } catch (err) {
+    console.error(err);
+    setStatus("status-compresspdf", "Couldn't read that PDF. Try another file.", "error");
+  }
+});
